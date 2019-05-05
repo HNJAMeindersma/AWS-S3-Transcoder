@@ -7,7 +7,7 @@ transcoder = new AWS.ElasticTranscoder({
 exports.handler = (event, context, callback) => {
   let fileName = event.Records[0].s3.object.key;
   var srcKey =  decodeURIComponent(event.Records[0].s3.object.key.replace(/\+/g, " "));
-  console.log('New file triggered: ', getDeleteName(fileName));
+  console.log('New ingest file: ', getDeleteName(fileName));
   transcoder.createJob({
     PipelineId: process.env.PIPELINE_ID,
     Input: {
@@ -42,18 +42,18 @@ exports.handler = (event, context, callback) => {
           };
           s3.copyObject(params, function(err, data) {
             if(err) {
-              console.log('Failed to copy triggered file: ', err);
+              console.log('Failed to copy ingest file: ', err);
             } else {
-              console.log('Triggered file copied.');
+              console.log('Ingest file copied.');
               var params = {
                 Bucket: process.env.BUCKET_NAME,
                 Key: getDeleteName(fileName)
               };
               s3.deleteObject(params, function(err, data) {
                 if(err) {
-                  console.log('Failed to delete triggered file: ', err);
+                  console.log('Failed to delete ingest file: ', err);
                 } else {
-                  console.log('Triggered file deleted.');
+                  console.log('Ingest file deleted.');
                 }
               });
             }
@@ -66,8 +66,11 @@ exports.handler = (event, context, callback) => {
 };
 function removeExtension(srcKey){
   let lastDotPosition = srcKey.lastIndexOf(".");
-  if(lastDotPosition === -1) return srcKey;
-  else return srcKey.substr(0, lastDotPosition);
+  if(lastDotPosition === -1) {
+    return srcKey;
+  } else {
+    return srcKey.substr(0, lastDotPosition);
+  }
 }
 function getOutputName(srcKey){
   let baseName = srcKey.replace(process.env.PREFIX_TRIGGER, '');
